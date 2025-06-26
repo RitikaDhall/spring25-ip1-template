@@ -33,6 +33,15 @@ describe('User model', () => {
     });
 
     // TODO: Task 1 - Write additional test cases for saveUser
+    it('should throw an error if user creation fails', async () => {
+      const mockError = new Error('User creation failed!');
+      jest.spyOn(UserModel, 'create').mockRejectedValueOnce(mockError);
+
+      const result = await saveUser(user);
+      expect(result).toEqual({
+        error: `Error occurred while saving the user: ${mockError.message}`,
+      });
+    });
   });
 });
 
@@ -51,6 +60,17 @@ describe('getUserByUsername', () => {
   });
 
   // TODO: Task 1 - Write additional test cases for getUserByUsername
+  it('should throw an error if an error occurs while retrieving user', async () => {
+    mockingoose(UserModel).toReturn(new Error('Error retrieving the user'), 'findOne');
+    const result = await getUserByUsername(user.username);
+    expect('error' in result).toBe(true);
+  });
+
+  it('should throw an error if user not found', async () => {
+    mockingoose(UserModel).toReturn(null, 'findOne');
+    const result = await getUserByUsername(user.username);
+    expect('error' in result).toBe(true);
+  });
 });
 
 describe('loginUser', () => {
@@ -73,6 +93,27 @@ describe('loginUser', () => {
   });
 
   // TODO: Task 1 - Write additional test cases for loginUser
+  it('should throw an error if username is invalid', async () => {
+    const loginCredentials: UserCredentials = {
+      username: 'ritika',
+      password: user.password,
+    };
+
+    const result = await loginUser(loginCredentials);
+
+    expect('error' in result).toBe(true);
+  });
+
+  it('should throw an error if password is invalid', async () => {
+    const loginCredentials: UserCredentials = {
+      username: user.username,
+      password: 'ritika',
+    };
+
+    const result = await loginUser(loginCredentials);
+
+    expect('error' in result).toBe(true);
+  });
 });
 
 describe('deleteUserByUsername', () => {
@@ -90,6 +131,20 @@ describe('deleteUserByUsername', () => {
   });
 
   // TODO: Task 1 - Write additional test cases for deleteUserByUsername
+  it('should throw an error if deleting user fails', async () => {
+    mockingoose(UserModel).toReturn(
+      new Error('Error occurred while deleting user'),
+      'findOneAndDelete',
+    );
+    const result = await deleteUserByUsername(user.username);
+    expect('error' in result).toBe(true);
+  });
+
+  it('should throw an error if user to be deleted does not exist', async () => {
+    mockingoose(UserModel).toReturn(null, 'findOneAndDelete');
+    const result = await deleteUserByUsername(user.username);
+    expect('error' in result).toBe(true);
+  });
 });
 
 describe('updateUser', () => {
@@ -123,4 +178,18 @@ describe('updateUser', () => {
   });
 
   // TODO: Task 1 - Write additional test cases for updateUser
+  it('should throw an error if updateUser fails', async () => {
+    mockingoose(UserModel).toReturn(
+      new Error('Error occurred while updating the user'),
+      'findOneAndUpdate',
+    );
+    const result = await updateUser(user.username, updates);
+    expect('error' in result).toBe(true);
+  });
+
+  it('should throw an error if user not found', async () => {
+    mockingoose(UserModel).toReturn(null, 'findOneAndUpdate');
+    const result = await updateUser(user.username, updates);
+    expect('error' in result).toBe(true);
+  });
 });
